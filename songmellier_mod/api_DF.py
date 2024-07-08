@@ -1,20 +1,60 @@
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-
 import requests
 import time
 import ast
 import pandas as pd
 from typing import List
 
-class spAPIget:
-    def __init__(self, sp: spotipy.Spotify):
-        self.sp = sp
-    
-    # artists
+from dotenv import load_dotenv
+import os
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
+# def getCred():
+#     load_dotenv(dotenv_path = 'api_cred/spotify.env')
+
+#     cid = os.getenv('cid')
+#     secret = os.getenv('secret')
+
+#     client_credentials_manager = SpotifyClientCredentials(client_id = cid, client_secret = secret)
+#     return(spotipy.Spotify(client_credentials_manager = client_credentials_manager))
+
+# For now, what seems to work with getting the api credentials is loading it globally in whatever script/environment you are running, then using it as an input in the function
+
+class APIget():
+    # returns individual JSON
+    def artist_by_name(sp, artist_name: str) -> dict: 
+        try:
+            top_result = sp.search(q = 'artist:' + artist_name, type = 'artist')['artists']['items'][0]
+            info_dict = {
+                'Name': top_result['name'],
+                'URI': top_result['uri'],
+                'Popularity': top_result['popularity'],
+                'Genres': top_result['genres'],
+                'Followers': top_result['followers']['total']
+                }
+            return(info_dict)
+        except Exception as e:
+            print(f'An error occured: {e} for the artist: {artist_name}')
+            return None
+
+    # individual JSON
+    def artist_by_uri(sp, artist_uri: str) -> dict:
+        try:
+            response = sp.artist(artist_uri)
+            info_dict = {
+                'name': response['name'], 
+                'artist_uri': response['uri'], 
+                'popularity': response['popularity'], 
+                'genres': response['genres'], 
+                'followers': response['followers']['total']
+            }
+            return info_dict
+        except Exception as e:
+            print(f'An error occurred: {e} for the artist: {artist_uri}')
+            return None
 
     # returns list of JSON
-    def artist_by_playlist(self, pl_list: List[str]) -> dict:
+    def artist_by_playlist(pl_list: List[str]) -> dict:
         artists_list = []
         for playlist_url in pl_list:
             try:
@@ -31,39 +71,9 @@ class spAPIget:
             except Exception as e:
                 print(f'An error occurred: {e}')
         return(artists_list)
-    
-    # returns individual JSON
-    def artist_by_name(self, artist_name: str) -> dict: 
-        try:
-            top_result = self.sp.search(q = 'artist:' + artist_name, type = 'artist')['artists']['items'][0]
-            info_dict = {
-                'Name': top_result['name'],
-                'URI': top_result['uri'],
-                'Popularity': top_result['popularity'],
-                'Genres': top_result['genres'],
-                'Followers': top_result['followers']['total']
-                }
-            return(info_dict)
-        except Exception as e:
-            print(f'An error occured: {e} for the artist: {artist_name}')
-            return None
-    
-    # individual JSON
-    def artist_by_uri(self, artist_uri: str) -> dict:
-        try:
-            response = sp.artist(artist_uri)
-            info_dict = {'name': response['name'], 
-                        'artist_uri': response['uri'], 
-                        'popularity': response['popularity'], 
-                        'genres': response['genres'], 
-                        'followers': response['followers']['total']}
-            return(info_dict)
-        except Exception as e:
-            print(f'An error occured: {e} for the artist: {artist_uri}')
-            return None
-    
+
     # Albums
-    def album_by_uri(self, artist_uri: str) -> List[dict]:
+    def album_by_uri(artist_uri: str) -> List[dict]:
         results = sp.artist_albums(artist_uri)
         all_albums = []
         try:
@@ -86,9 +96,9 @@ class spAPIget:
         except Exception as e:
             print(f"An error occured: {e} for the album: {album['name']}")
             return None
-    
+
     # Tracks
-    def tracks_from_album(self, curr_album_uri: str, curr_album_name: str) -> List[dict]:
+    def tracks_from_album(curr_album_uri: str, curr_album_name: str) -> List[dict]:
         try:
             response = sp.album_tracks(curr_album_uri)['items']
             tracks_list = []
@@ -111,9 +121,9 @@ class spAPIget:
         except Exception as e:
             print(f"An error occured: {e}")
             return(None)
-    
+
     # Audio features
-    def get_audio_fts(self, range_start, range_end) -> List[dict]:
+    def get_audio_fts(range_start, range_end) -> List[dict]:
         try:
             audio_feats_to_add = []
             while range_start < range_end:
@@ -123,10 +133,10 @@ class spAPIget:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-class add_to_df:
+class saveData():
     # used in conjunction with the results from the spAPIget functions
 
-    def to_artist_info(self, data_add: List[dict], path: str):
+    def to_artist_info(data_add: List[dict], path: str):
         artist_info = pd.read_csv(path)
         data_add_df = pd.json_normalize(data_add)
         new_df = pd.concat([artist_info, data_add_df], ignore_index = True)
@@ -136,10 +146,15 @@ class add_to_df:
                 new_df[col] = new_df[col].apply(str)
         
         new_df = new_df.drop_duplicates(subset = ['URI'])
-        new_df.to_csv(path, index = False)
+        new_df
+        confirm = input('Y/N: ')
+        if confirm == 'y':
+            new_df.to_csv(path, index = False)
+        else:
+            pass
         return()
-    
-    def to_albums(self, data_add: List[dict], path: str):
+
+    def to_albums(data_add: List[dict], path: str):
         album_df = pd.read_csv(path)
         data_add_df = pd.json_normalize(data_add)
         new_df = pd.concat([album_df, data_add_df], ignore_index = True)
@@ -150,39 +165,39 @@ class add_to_df:
 
         new_df.to_csv(path, index = False)
         return()
-    
-def to_tracks(self, data_add: List[dict], path: str):
-    album_tracks = pd.read_csv(path)
-    data_add_df = pd.json_normalize(data_add)
-    new_df = pd.concat([album_tracks, data_add_df], ignore_index = True)
 
-    for col in new_df.columns:
-        if new_df[col].apply(lambda x: isinstance(x, list)).any():
-            new_df[col] = new_df[col].apply(str)
+    def to_tracks(data_add: List[dict], path: str):
+        album_tracks = pd.read_csv(path)
+        data_add_df = pd.json_normalize(data_add)
+        new_df = pd.concat([album_tracks, data_add_df], ignore_index = True)
 
-    new_df = new_df.drop_duplicates()        
-    new_df.to_csv(path, index = False)
-    return()
+        for col in new_df.columns:
+            if new_df[col].apply(lambda x: isinstance(x, list)).any():
+                new_df[col] = new_df[col].apply(str)
 
-def to_audioFeats(self, data_add: List[dict], path1: str, path2: str):
-    feat_df = pd.read_csv(path1)
-    album_tracks = pd.read_csv(path2)
-    data_add_df = pd.json_normalize(data_add)
-    new_df = pd.concat([feat_df, data_add_df], ignore_index = True)
-    
-    # adding in artist, album data
-    new_df = new_df.merge(album_tracks[['uri', 'name', 'album_name', 'album_uri', 'artists']], on='uri', how='left', suffixes = ('', '_new'))
-    new_df.drop(columns = [
-        'name', 'album_name', 'album_uri', 'artists', 'id', 'type', 'track_href', 'analysis_url'
-        ], inplace = True)
-    new_df.rename(columns = {
-        'name_new': 'name',
-        'album_name_new': 'album_name',
-        'album_uri_new': 'album_uri',
-        'artists_new': 'artists',
-        'uri': 'track_uri'
-        }, inplace = True)
-    
-    new_df.drop_duplicates(inplace = True)
-    new_df.dropna(inplace = True)
-    new_df.to_csv(path1, index = False)
+        new_df = new_df.drop_duplicates()        
+        new_df.to_csv(path, index = False)
+        return()
+
+    def to_audioFeats(data_add: List[dict], path1: str, path2: str):
+        feat_df = pd.read_csv(path1)
+        album_tracks = pd.read_csv(path2)
+        data_add_df = pd.json_normalize(data_add)
+        new_df = pd.concat([feat_df, data_add_df], ignore_index = True)
+
+        # adding in artist, album data
+        new_df = new_df.merge(album_tracks[['uri', 'name', 'album_name', 'album_uri', 'artists']], on='uri', how='left', suffixes = ('', '_new'))
+        new_df.drop(columns = [
+            'name', 'album_name', 'album_uri', 'artists', 'id', 'type', 'track_href', 'analysis_url'
+            ], inplace = True)
+        new_df.rename(columns = {
+            'name_new': 'name',
+            'album_name_new': 'album_name',
+            'album_uri_new': 'album_uri',
+            'artists_new': 'artists',
+            'uri': 'track_uri'
+            }, inplace = True)
+
+        new_df.drop_duplicates(inplace = True)
+        new_df.dropna(inplace = True)
+        new_df.to_csv(path1, index = False)
