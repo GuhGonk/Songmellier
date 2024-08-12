@@ -29,7 +29,7 @@ class feat_eng:
         artist_list = [artist['name'] for artist in artist_liteval]
         return(artist_list)
 
-    def get_genres(uri_list):
+    def get_genres(uri_list, artist_df):
         try:
             all_genres = []
             for artist in uri_list:
@@ -52,7 +52,7 @@ class feat_eng:
     def genre_ft(df):
         mlb = MultiLabelBinarizer()
         genre_vectors = mlb.fit_transform(df['genres'])
-        genre_df = pd.DataFrame(genre-vectors, columns = mlb.classes_)
+        genre_df = pd.DataFrame(genre_vectors, columns = mlb.classes_)
         genre_feat = pd.concat([df.uri, genre_df], axis = 1)
         genre_feat = genre_feat.set_index('uri')
         return(genre_feat)
@@ -206,3 +206,4 @@ class model_work:
         target_uri = uri_lookup(album_tracks)
         genre_feat = pca_reduce_genre(genre_feat, 500)
         reduced_feats = batch_cosine_genre(genre_feat)
+        

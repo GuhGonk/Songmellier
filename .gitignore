@@ -2,3 +2,4 @@ api_cred/
 data/
 .ipynb_checkpoints/
 _pycache_/
+.cache/
