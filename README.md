@@ -10,9 +10,11 @@ Using data from Spotify's API to create a recommender primarily using the data f
 ## PySpark, EMR, Dimension Independent Matrix Square (DIMSUM) - Deprecated
 Stored in separate respository: https://github.com/GuhGonk/KaggleSpotify6K
 
+**No longer in use due to maintenance costs.**
+
 Utilized cloud computing tools (AWS EC2, S3, EMR) and Databricks to leverage PySpark's cluster computing. 
 
-No longer in use due to maintenance costs.
+
 
 Process:
 * TF-IDF vectorization hashing (genres, playlists, categorical, confidence measures/music attributes)
