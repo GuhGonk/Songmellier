@@ -1,5 +1,5 @@
 # Spotify Recommendation System
-Using data from Spotify's API to create a recommender primarily using the data from 'audio features' 
+Using data from Spotify's API to create a recommender primarily using the data from the 'audio features' data.
 
 # Models
 ## Batch Cosine Similarity with PCA Reduction
