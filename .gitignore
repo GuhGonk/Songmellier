@@ -1,5 +1,8 @@
 api_cred/
 data/
+data_old/
 .ipynb_checkpoints/
 _pycache_/
 .cache/
+data.zip
+songmellier_env_312/
